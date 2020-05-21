@@ -11,6 +11,9 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 @Entity
@@ -19,18 +22,24 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Commission {
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@JsonIgnore
-	private Long id;
 
-	@Column(name = "commission_pt")
-	private BigDecimal commissionPt;
+    @Id
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    @JsonIgnore
+    private Long id;
 
-	@Column(name = "currency_from")
-	private Currency fromCurrency;
+    @Column(name = "FROM_CURRENCY")
+    @NotNull(message = "Please provide fromCurrency")
+    private Currency fromCurrency;
 
-	@Column(name = "currency_to")
-	private Currency toCurrency;
+    @Column(name = "TO_CURRENCY")
+    @NotNull(message = "Please provide toCurrency")
+    private Currency toCurrency;
+
+    @Column(name = "COMMISSION_PERCENT")
+    @DecimalMin("0.00")
+    @DecimalMax("100.00")
+    @NotNull(message = "Please provide a commission percent")
+    private BigDecimal commissionPct;
 
 }

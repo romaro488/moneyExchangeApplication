@@ -5,7 +5,7 @@ import lombok.Data;
 
 @AllArgsConstructor
 @Data
-public class Error {
+public class Error extends Throwable {
 
 	private String description;
 }

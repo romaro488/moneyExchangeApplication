@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -23,6 +24,14 @@ import java.math.BigDecimal;
 @Entity
 @Table(name = "exchange_rate")
 public class ExchangeRate {
+
+
+	public ExchangeRate(Currency currencyTo, Currency currencyFrom, BigDecimal rate) {
+		this.currencyTo = currencyTo;
+		this.currencyFrom = currencyFrom;
+		this.rate = rate;
+	}
+
 	@Id
 	@JsonIgnore
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -41,6 +50,4 @@ public class ExchangeRate {
 	@Column(name = "currency_to")
 	@NotNull
 	private Currency currencyTo;
-
-
 }
