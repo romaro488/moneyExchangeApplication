@@ -1,7 +1,8 @@
 package com.application.service.impl;
 
+import com.application.Entity.Commission;
+import com.application.Entity.ExchangeRate;
 import com.application.Entity.ExchangeRequest;
-import com.application.Entity.OperationType;
 import com.application.repository.CommissionRepository;
 import com.application.repository.ExchangeRateRepository;
 import com.application.service.ExchangeService;
@@ -9,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+
+import static com.application.Entity.OperationType.GIVE;
 
 @Service
 @RequiredArgsConstructor
@@ -19,59 +22,45 @@ public class ExchangeServiceImpl implements ExchangeService {
 
 	@Override
 	public ExchangeRequest exchange(ExchangeRequest exchangeRequest) {
-		BigDecimal commissionPct = commissionRepository
-				.findCommissionAmountByCurrency(
-						exchangeRequest.getCurrencyFrom(),
-						exchangeRequest.getCurrencyTo());
-
-		if (commissionPct == null) {
-			throw new RuntimeException("Please set commission pt for this pair");
-		}
-
-		if (OperationType.GIVE == exchangeRequest.getOperationType()) {
-			setAmountTo(exchangeRequest, commissionPct);
+		Commission commission;
+		ExchangeRate rate;
+		if (exchangeRequest.getOperationType().equals(GIVE)) {
+			commission = commissionRepository.
+					findCommissionByCurrency(exchangeRequest.getCurrencyFrom(), exchangeRequest.getCurrencyTo());
+			rate = rateRepository.
+					findExchangeRateByCurrency(exchangeRequest.getCurrencyFrom(), exchangeRequest.getCurrencyTo());
 		} else {
-			setAmountFrom(exchangeRequest, commissionPct);
+			commission = commissionRepository.
+					findCommissionByCurrency(exchangeRequest.getCurrencyTo(), exchangeRequest.getCurrencyFrom());
+			rate = rateRepository.
+					findExchangeRateByCurrency(exchangeRequest.getCurrencyTo(), exchangeRequest.getCurrencyFrom());
 		}
-
+		switch (exchangeRequest.getOperationType()) {
+			case GET:
+				setupExchangeGet(exchangeRequest, commission, rate);
+				break;
+			case GIVE:
+				setupExchangeGive(exchangeRequest, commission, rate);
+				break;
+		}
 		return exchangeRequest;
 	}
 
-	private void setAmountTo(ExchangeRequest exchangeRequest, BigDecimal commissionPct) {
-		BigDecimal amountFrom = exchangeRequest.getAmountFrom();
-		if (amountFrom == null) {
-			throw new IllegalArgumentException("Please set amountFrom value");
-		}
-
-		BigDecimal exchangeRate = rateRepository
-				.findRateAmountByCurrency(exchangeRequest.getCurrencyFrom(), exchangeRequest.getCurrencyTo());
-		exchangeRequest.setAmountTo(calculateDirectExchange(exchangeRate, commissionPct, amountFrom));
+	private void setupExchangeGet(ExchangeRequest exchange, Commission commission, ExchangeRate rate) {
+		BigDecimal commissionAmount;
+		commissionAmount = exchange.getAmountTo()
+				.divide(BigDecimal.valueOf(100))
+				.multiply(commission.getCommissionPct());
+		exchange.setAmountFrom(exchange.getAmountTo().add(commissionAmount).multiply(rate.getRate()));
+		exchange.formatResult();
 	}
 
-	private BigDecimal calculateDirectExchange(BigDecimal exchangeRate, BigDecimal commissionPct, BigDecimal amountFrom) {
-		BigDecimal convertedCurrency = exchangeRate.multiply(amountFrom);
-		BigDecimal commission = amountFrom.multiply(commissionPct).divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
-
-		return convertedCurrency.subtract(commission).multiply(exchangeRate);
+	private void setupExchangeGive(ExchangeRequest exchange, Commission commission, ExchangeRate rate) {
+		BigDecimal commissionAmount;
+		commissionAmount = exchange.getAmountFrom()
+				.divide(BigDecimal.valueOf(100))
+				.multiply(commission.getCommissionPct());
+		exchange.setAmountTo(exchange.getAmountFrom().subtract(commissionAmount).multiply(rate.getRate()));
+		exchange.formatResult();
 	}
-
-	private void setAmountFrom(ExchangeRequest exchangeRequest, BigDecimal commissionPct) {
-		BigDecimal amountTo = exchangeRequest.getAmountTo();
-		if (amountTo == null) {
-			throw new IllegalArgumentException("Please set amountTo value");
-		}
-
-		BigDecimal exchangeRate = rateRepository
-				.findRateAmountByCurrency(exchangeRequest.getCurrencyTo(), exchangeRequest.getCurrencyFrom());
-		exchangeRequest.setAmountFrom(calculateBackExchange(exchangeRate, commissionPct, amountTo));
-	}
-
-	private BigDecimal calculateBackExchange(BigDecimal exchangeRate, BigDecimal commissionPct, BigDecimal amountTo) {
-		BigDecimal convertedCurrency = exchangeRate.multiply(amountTo);
-		BigDecimal commission = convertedCurrency.multiply(commissionPct).divide(BigDecimal.valueOf(100), 2,
-				BigDecimal.ROUND_HALF_UP);
-
-		return convertedCurrency.add(commission);
-	}
-
 }

@@ -29,4 +29,10 @@ public class ExchangeRequest {
 	Currency currencyTo;
 
 	OperationType operationType;
+
+	public ExchangeRequest formatResult() {
+		setAmountTo(amountTo.setScale(2, BigDecimal.ROUND_HALF_UP));
+		setAmountFrom(amountFrom.setScale(2, BigDecimal.ROUND_HALF_UP));
+		return this;
+	}
 }

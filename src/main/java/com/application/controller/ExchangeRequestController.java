@@ -1,7 +1,6 @@
 package com.application.controller;
 
 import com.application.Entity.ExchangeRequest;
-import com.application.Entity.OperationType;
 import com.application.service.ExchangeService;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.Authorization;

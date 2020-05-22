@@ -12,7 +12,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class CommissionServiceImpl implements CommissionService {
-	private CommissionRepository commissionRepository;
+	private final CommissionRepository commissionRepository;
 
 	@Override
 	public Commission createCommission(Commission commission) {
